@@ -370,7 +370,7 @@ sudo sbsign --key /etc/refind.d/keys/refind_local.key --cert /etc/refind.d/keys/
 # Add some user niceties whiler you are there
 rustup default stable && \
 yay --noremovemake --nodiffmenu -S otf-san-francisco pamac-aur optimus-manager optimus-manager-qt joplin-dektop masterpassword-gui pulseaudio-equalizer-ladspa \
-xdman universal-ctags-git starship-bin nohang-git auto-cpufreq-git prelockd popsicle bottom-bin memavaild snapper-gui brave-bin
+xdman universal-ctags-git starship-bin nohang-git auto-cpufreq-git prelockd popsicle bottom-bin memavaild snapper-gui brave-bin ttf-ms-fonts
 yay --noremovemake --nodiffmenu --editmenu -S linux-xanmod-cacule
 
 # dotfile - SKIP this part (personal)
@@ -463,5 +463,5 @@ rm /home/$USER/init.sh
 EOF
 chown $USER /home/$USER/init.sh
 
-
-echo "Configuration done. You can now exit chroot and reboot. IMPORTANT: After reboot, run the init.sh script located in your home directory."
+# exit chroot
+exit

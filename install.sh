@@ -24,9 +24,12 @@ reflector -c "$country" -a 12 --sort rate --save /etc/pacman.d/mirrorlist
 pacman -Syyy
 
 # Filesystem mount warning
+lsblk
+read -p 'From the above, which drive to install arch linux to? e.g. /dev/sda: ' drive
+
 echo "This script will create and format the partitions as follows:"
-echo "/dev/sda1 - 512Mib will be mounted as /boot/efi"
-echo "/dev/sda2 - rest of space will be mounted as @ - BTRFS"
+echo "/dev/"$drive"1 - 512Mib will be mounted as /boot"
+echo "/dev/"$drive"2 - rest of space will be mounted as @ - BTRFS"
 read -p 'Continue? [y/N]: ' fsok
 if [ $fsok = 'n' ] && [ $fsok = 'N' ]
 then
@@ -35,20 +38,20 @@ then
 fi
 
 # Partition
-sgdisk -og $1
-sgdisk -n 1:2048:$((2048+512-1)) -c 1:"EFI" -t 1:ef00 $1
-ENDSECTOR=`sgdisk -E $1`
-sgdisk -n 2:$((2048+512)):$ENDSECTOR -c 2:"Arch" -t 2:8300 $1
-sgdisk -p $1
+EFI_SIZE=524288 # in bytes
+ENDSECTOR=`sgdisk -E /dev/sda`
 
-exit
+sgdisk -og $drive
+sgdisk -n 1:2048:$((2048+($EFI_SIZE*2)-1)) -c 1:"EFI" -t 1:ef00 $drive
+sgdisk -n 2:$((2048+($EFI_SIZE*2))):$ENDSECTOR -c 2:"Arch" -t 2:8300 $drive
+sgdisk -p /dev/sda
 
 # encrypt partition
 cryptsetup luksFormat --perf-no_read_workqueue --perf-no_write_workqueue --type luks2 --cipher aes-xts-plain64 --key-size 512 --iter-time 2000 --pbkdf argon2id --hash sha3-512 /dev/sda2
 cryptsetup --allow-discards --perf-no_read_workqueue --perf-no_write_workqueue --persistent open /dev/sda2 crypt
 
 # Format the partitions
-mkfs.fat -F32 /dev/sda1
+mkfs.fat -F32 $drive"1"
 mkfs.btrfs /dev/mapper/crypt
 
 # Create/Mount Subvolumes (btrfs)
@@ -84,18 +87,30 @@ mount /dev/sda1 /mnt/boot
 # base install
 pacstrap /mnt base base-devel linux linux-firmware intel-ucode grub efibootmgr os-prober ntfs-3g networkmanager network-manager-applet wireless_tools \
     dialog mtools dosfstools base-devel linux-headers bluez bluez-utils cups alsa-utils pulseaudio pulseaudio-bluetooth git reflector \
-    xdg-utils xdg-user-utils xorg nvidia nvidia-utils xfce4 xfce4-goodies tlp iwd sbsigntools fd zsh sshguard firewalld nautilus gnome-keyring go btrfs-progs \
+    xdg-utils xdg-user-dirs xorg nvidia nvidia-utils xfce4 xfce4-goodies tlp iwd sbsigntools fd zsh sshguard firewalld nautilus gnome-keyring go btrfs-progs \
     ripgrep bat docker docker-compose libvirt qemu openssh refind rustup rust-analyzer powertop unrar lrzip unzip zip p7zip lzip lzop ncompress ttf-roboto ttf-roboto-mono \
     ttf-dejavu ttf-liberation ttf-fira-code ttf-hanazono ttf-fira-mono ttf-opensans ttf-hack noto-fonts noto-fonts-emoji ttf-font-awesome ttf-droid \
-    adobe-source-code-pro-fonts adobe-source-han-sans-otc-fonts adobe-source-han-serif-otc-fonts ttf-ms-fonts man yarn nodejs systemd-swap wget zsh-completions \
+    adobe-source-code-pro-fonts adobe-source-han-sans-otc-fonts adobe-source-han-serif-otc-fonts man yarn nodejs systemd-swap wget zsh-completions \
     gvim htop xclip python2-pip python-pip gnome-calculator sxhkd maim psensor stow tmux git-lfs unclutter xcape pigz pbzip2 zstd neovim flatpak dbus-broker haveged \
     irqbalance snapper
 
 # fstab
 genfstab -U /mnt > /mnt/etc/fstab
 
+# Copy post-install system configuration script to new /root
+cp -rfv post-chroot.sh /mnt/root
+chmod a+x /mnt/root/post-chroot.sh
+
 # chroot
 echo "After chrooting into newly installed OS, please run the post-chroot.sh by executing ./post-chroot.sh"
 echo "Press any key to chroot..."
 read tmpvar
 arch-chroot /mnt /bin/bash
+
+# Finish
+echo "If post-chroot.sh is successful, you will now have a fully working bootable Arch Linux system installed."
+echo "The only thing left is to reboot into the new system."
+echo "IMPORTANT: After reboot, run the init.sh script located in your home directory and reboot again."
+echo "Press any key to reboot or Ctrl+C to cancel..."
+read tmpvar
+reboot
