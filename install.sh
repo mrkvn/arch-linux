@@ -41,6 +41,8 @@ ENDSECTOR=`sgdisk -E $1`
 sgdisk -n 2:$((2048+512)):$ENDSECTOR -c 2:"Arch" -t 2:8300 $1
 sgdisk -p $1
 
+exit
+
 # encrypt partition
 cryptsetup luksFormat --perf-no_read_workqueue --perf-no_write_workqueue --type luks2 --cipher aes-xts-plain64 --key-size 512 --iter-time 2000 --pbkdf argon2id --hash sha3-512 /dev/sda2
 cryptsetup --allow-discards --perf-no_read_workqueue --perf-no_write_workqueue --persistent open /dev/sda2 crypt
