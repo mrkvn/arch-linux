@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Sources
+# https://gist.github.com/Th3Whit3Wolf/2f24b29183be7f8e9c0b05115aefb693
+# https://github.com/krushndayshmookh/krushn-arch
+
 echo "mrkvn's Arch installer"
 
 
@@ -24,7 +28,7 @@ echo "This script will create and format the partitions as follows:"
 echo "/dev/sda1 - 512Mib will be mounted as /boot/efi"
 echo "/dev/sda2 - rest of space will be mounted as @ - BTRFS"
 read -p 'Continue? [y/N]: ' fsok
-if ! [ $fsok = 'y' ] && ! [ $fsok = 'Y' ]
+if [ $fsok = 'n' ] && [ $fsok = 'N' ]
 then
     echo "Edit the script to continue..."
     exit
@@ -83,7 +87,7 @@ pacstrap /mnt base base-devel linux linux-firmware intel-ucode grub efibootmgr o
     ttf-dejavu ttf-liberation ttf-fira-code ttf-hanazono ttf-fira-mono ttf-opensans ttf-hack noto-fonts noto-fonts-emoji ttf-font-awesome ttf-droid \
     adobe-source-code-pro-fonts adobe-source-han-sans-otc-fonts adobe-source-han-serif-otc-fonts ttf-ms-fonts man yarn nodejs systemd-swap wget zsh-completions \
     gvim htop xclip python2-pip python-pip gnome-calculator sxhkd maim psensor stow tmux git-lfs unclutter xcape pigz pbzip2 zstd neovim flatpak dbus-broker haveged \
-    irqbalance
+    irqbalance snapper
 
 # fstab
 genfstab -U /mnt > /mnt/etc/fstab

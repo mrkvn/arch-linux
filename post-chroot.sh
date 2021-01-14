@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Sources
+# https://gist.github.com/Th3Whit3Wolf/2f24b29183be7f8e9c0b05115aefb693
+# https://github.com/krushndayshmookh/krushn-arch
+
 echo "mrkvn's Arch Config"
 
 # export some variables
@@ -366,11 +370,13 @@ sudo sbsign --key /etc/refind.d/keys/refind_local.key --cert /etc/refind.d/keys/
 # Add some user niceties whiler you are there
 rustup default stable && \
 yay --noremovemake --nodiffmenu -S otf-san-francisco pamac-aur optimus-manager optimus-manager-qt joplin-dektop masterpassword-gui pulseaudio-equalizer-ladspa \
-xdman universal-ctags-git starship-bin nohang-git auto-cpufreq-git prelockd popsicle bottom-bin memavaild
+xdman universal-ctags-git starship-bin nohang-git auto-cpufreq-git prelockd popsicle bottom-bin memavaild snapper-gui brave-bin
 yay --noremovemake --nodiffmenu --editmenu -S linux-xanmod-cacule
 
-# dotfile (personal)
+# dotfile - SKIP this part (personal)
 git clone https://github.com/mrkvn/.dotfiles.git $HOME/.dotfiles
+chmod +x $HOME/.dotfiles/.local/bin/mk-stow
+./$HOME/.dotfiles/.local/bin/mk-stow
 
 # back to root
 exit
@@ -423,9 +429,13 @@ EOF
 
 # Make scripts to start service, firewall, & setup snapshots
 cat << EOF >> /home/$USER/init.sh
+#!bin/bash
+
 sudo umount /.snapshots
 sudo rm -r /.snapshots
 sudo snapper -c root create-config /
+sudo btrfs subvolume delete /.snapshots
+sudo mkdir /.snapshots
 sudo mount -a
 sudo chmod 750 -R /.snapshots
 sudo chmod a+rx /.snapshots
@@ -449,5 +459,9 @@ sudo firewall-cmd --zone=public --add-service=http
 sudo firewall-cmd --zone=public --add-service=https
 sudo firewall-cmd --zone=public --add-service=https --permanent
 sudo firewall-cmd --reload
+rm /home/$USER/init.sh
 EOF
+chown $USER /home/$USER/init.sh
 
+
+echo "Configuration done. You can now exit chroot and reboot. IMPORTANT: After reboot, run the init.sh script located in your home directory."
