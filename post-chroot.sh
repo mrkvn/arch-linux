@@ -3,10 +3,13 @@
 # Sources
 # https://gist.github.com/Th3Whit3Wolf/2f24b29183be7f8e9c0b05115aefb693
 # https://github.com/krushndayshmookh/krushn-arch
-
+echo "-------------------"
 echo "mrkvn's Arch Config"
+echo "-------------------"
+echo ""
 
 # export some variables
+echo "Computer Setup ----------------------"
 read -p 'Username: ' username
 export USER=$username
 read -p 'Hostname: ' hostname
@@ -15,6 +18,7 @@ read -p 'Timezone (e.g. Europe/London): ' timezone
 export TZ=$timezone
 
 # root password
+echo "Root Password ---"
 passwd
 
 # locale
@@ -29,7 +33,8 @@ hwclock --systohc
 echo $HOST > /etc/hostname
 
 # user
-useradd -mg users -G wheel,storage,power,docker,libvirt,kvm,input,video -s /bin/zsh $USER && \
+echo "User Password ---"
+useradd -mg users -G wheel,storage,power,docker,libvirt,kvm,input,video $USER && \
 passwd $USER
 echo "$USER ALL=(ALL) ALL" >> /etc/sudoers && \
 echo "Defaults timestamp_timeout=0" >> /etc/sudoers
@@ -354,12 +359,12 @@ EOF
 
 # Setup the user & configure the bootloader
 su $USER
-cd ~  && \
-git clone https://aur.archlinux.org/yay.git && \
-cd yay && \
-makepkg -si && \
-cd .. && \
-sudo rm -dR yay
+cd
+git clone https://aur.archlinux.org/yay.git
+cd yay
+makepkg -si
+cd
+rm -rf ~/yay
 
 # Sign bootloader & kernel for Secure Boot
 
@@ -378,6 +383,9 @@ git clone https://github.com/mrkvn/.dotfiles.git $HOME/.dotfiles
 chmod +x $HOME/.dotfiles/.local/bin/mk-stow
 ./$HOME/.dotfiles/.local/bin/mk-stow
 
+# change shell to zsh
+chsh -s $(which zsh)
+
 # back to root
 exit
 
@@ -394,6 +402,8 @@ sed -i 's/#scanfor internal,external,optical,manual/scanfor manual,external/' /b
 sed -i 's/^hideui.*/hideui singleuser,hints,arrows,badges/' /boot/EFI/refind/themes/refind-dreary/theme.conf
 
 # Add rEFInd Manual Stanza
+read -p 'Reenter the same drive you entered earlier. e.g. /dev/sda: ' drive
+
 cat << EOF >> /boot/EFI/refind/refind.conf
 
 menuentry "Arch Linux" {
@@ -401,7 +411,7 @@ menuentry "Arch Linux" {
     volume   "Arch Linux"
     loader   /vmlinuz-linux
     initrd   /initramfs-linux.img
-    options  "rd.luks.name=$(blkid /dev/sda2 | cut -d " " -f2 | cut -d '=' -f2 | sed 's/\"//g')=crypt root=/dev/mapper/crypt rootflags=subvol=@ resume=/dev/mapper/crypt rw quiet nmi_watchdog=0 kernel.unprivileged_userns_clone=0 net.core.bpf_jit_harden=2 apparmor=1 lsm=lockdown,yama,apparmor systemd.unified_cgroup_hierarchy=1 add_efi_memmap initrd=\intel-ucode.img"
+    options  "rd.luks.name=$(blkid $drive"2" | cut -d " " -f2 | cut -d '=' -f2 | sed 's/\"//g')=crypt root=/dev/mapper/crypt rootflags=subvol=@ resume=/dev/mapper/crypt rw quiet nmi_watchdog=0 kernel.unprivileged_userns_clone=0 net.core.bpf_jit_harden=2 apparmor=1 lsm=lockdown,yama,apparmor systemd.unified_cgroup_hierarchy=1 add_efi_memmap initrd=\intel-ucode.img"
     submenuentry "Boot - fallback" {
         initrd /initramfs-linux-fallback.img
     }
@@ -415,7 +425,7 @@ menuentry "Arch Linux - Low Latency" {
     volume   "Arch Linux"
     loader   /vmlinuz-linux-xanmod-cacule
     initrd   /initramfs-linux-xanmod-cacule.img
-    options  "rd.luks.name=$(blkid /dev/sda2 | cut -d " " -f2 | cut -d '=' -f2 | sed 's/\"//g')=crypt root=/dev/mapper/crypt rootflags=subvol=@ resume=/dev/mapper/crypt rw quiet nmi_watchdog=0 kernel.unprivileged_userns_clone=0 net.core.bpf_jit_harden=2 apparmor=1 lsm=lockdown,yama,apparmor systemd.unified_cgroup_hierarchy=1 add_efi_memmap initrd=\intel-ucode.img"
+    options  "rd.luks.name=$(blkid $drive"2" | cut -d " " -f2 | cut -d '=' -f2 | sed 's/\"//g')=crypt root=/dev/mapper/crypt rootflags=subvol=@ resume=/dev/mapper/crypt rw quiet nmi_watchdog=0 kernel.unprivileged_userns_clone=0 net.core.bpf_jit_harden=2 apparmor=1 lsm=lockdown,yama,apparmor systemd.unified_cgroup_hierarchy=1 add_efi_memmap initrd=\intel-ucode.img"
     submenuentry "Boot - fallback" {
         initrd /initramfs-linux-xanmod-cacule-fallback.img
     }
