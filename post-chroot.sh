@@ -62,9 +62,9 @@ sed -i 's/#COMPRESSION="lz4"/COMPRESSION="lz4"/' /etc/mkinitcpio.conf && \
 sed -i 's/#COMPRESSION_OPTIONS=()/COMPRESSION_OPTIONS=(-9)/' /etc/mkinitcpio.conf && \
 #sed -i 's/^HOOKS.*/HOOKS=(base systemd autodetect modconf block sd-encrypt filesystems keyboard fsck)/' /etc/mkinitcpio.conf
 # if you have more than 1 btrfs drive
-sed -i 's/^HOOKS/HOOKS=(base systemd autodetect modconf block sd-encrypt resume btrfs filesystems keyboard fsck)/' mkinitcpio.conf
+sed -i 's/^HOOKS.*/HOOKS=(base systemd autodetect modconf block sd-encrypt resume btrfs filesystems keyboard fsck)/' /etc/mkinitcpio.conf
 
-mkinitcpio -p linux
+mkinitcpio -p linux &&
 
 # Laptop Battery Life Improvements
 
@@ -118,20 +118,6 @@ When=PostTransaction
 Exec=/usr/bin/refind-install --shim /usr/share/shim-signed/shimx64.efi --localkeys
 EOF
 
-# Zsh hooks
-cat << EOF > /etc/pacman.d/hooks/zsh.hook
-[Trigger]
-Operation = Install
-Operation = Upgrade
-Operation = Remove
-Type = Path
-Target = usr/bin/*
-[Action]
-Depends = zsh
-When = PostTransaction
-Exec = /usr/bin/install -Dm644 /dev/null /var/cache/zsh/pacman
-EOF
-
 # Better IO Scheduler
 cat << EOF > /etc/udev/rules.d/60-ioschedulers.rules
 # set scheduler for NVMe
@@ -162,7 +148,7 @@ EOF
 sed -i 's/^CFLAGS.*/CFLAGS="-march=native -mtune=native -O2 -pipe -fstack-protector-strong --param=ssp-buffer-size=4 -fno-plt"/' /etc/makepkg.conf && \
 sed -i 's/^CXXFLAGS.*/CXXFLAGS="-march=native -mtune=native -O2 -pipe -fstack-protector-strong --param=ssp-buffer-size=4 -fno-plt"/' /etc/makepkg.conf && \
 sed -i 's/^#RUSTFLAGS.*/RUSTFLAGS="-C opt-level=2 -C target-cpu=native"/' /etc/makepkg.conf && \
-sed -i 's/^#BUILDDIR.*/BUILDDIR=\/tmp\/makepkg makepkg/' /etc/makepkg.conf && \
+sed -i 's/^#BUILDDIR.*/BUILDDIR=\/tmp\/makepkg/' /etc/makepkg.conf && \
 sed -i 's/^#MAKEFLAGS.*/MAKEFLAGS="-j$(getconf _NPROCESSORS_ONLN) --quiet"/' /etc/makepkg.conf && \
 sed -i 's/^COMPRESSGZ.*/COMPRESSGZ=(pigz -c -f -n)/' /etc/makepkg.conf && \
 sed -i 's/^COMPRESSBZ2.*/COMPRESSBZ2=(pbzip2 -c -f)/' /etc/makepkg.conf && \
@@ -358,36 +344,32 @@ Exec = /bin/sh -c "sed -i 's|ConditionPathExists=/var/log/auto-cpufreq.log||g' /
 EOF
 
 # Setup the user & configure the bootloader
-su $USER
-cd
-git clone https://aur.archlinux.org/yay.git
-cd yay
-makepkg -si
-cd
-rm -rf ~/yay
+su $USER -Pc "cd &&\
+git clone https://aur.archlinux.org/yay.git && \
+cd yay && \
+makepkg -si && \
+cd && \
+rm -rf ~/yay && \
 
 # Sign bootloader & kernel for Secure Boot
 
 yay --noremovemake --nodiffmenu -S shim-signed && \
 sudo refind-install --shim /usr/share/shim-signed/shimx64.efi --localkeys && \
-sudo sbsign --key /etc/refind.d/keys/refind_local.key --cert /etc/refind.d/keys/refind_local.crt --output /boot/vmlinuz-linux /boot/vmlinuz-linux
+sudo sbsign --key /etc/refind.d/keys/refind_local.key --cert /etc/refind.d/keys/refind_local.crt --output /boot/vmlinuz-linux /boot/vmlinuz-linux && \
 
 # Add some user niceties whiler you are there
 rustup default stable && \
 yay --noremovemake --nodiffmenu -S otf-san-francisco pamac-aur optimus-manager optimus-manager-qt joplin-dektop masterpassword-gui pulseaudio-equalizer-ladspa \
 xdman universal-ctags-git starship-bin nohang-git auto-cpufreq-git prelockd popsicle bottom-bin memavaild snapper-gui brave-bin ttf-ms-fonts
-yay --noremovemake --nodiffmenu --editmenu -S linux-xanmod-cacule
+yay --noremovemake --nodiffmenu --editmenu -S linux-xanmod-cacule && \
 
 # dotfile - SKIP this part (personal)
-git clone https://github.com/mrkvn/.dotfiles.git $HOME/.dotfiles
-chmod +x $HOME/.dotfiles/.local/bin/mk-stow
-./$HOME/.dotfiles/.local/bin/mk-stow
+git clone https://github.com/mrkvn/.dotfiles.git $HOME/.dotfiles && \
+chmod +x $HOME/.dotfiles/.local/bin/mk-stow && \
+./$HOME/.dotfiles/.local/bin/mk-stow && \
 
 # change shell to zsh
-chsh -s $(which zsh)
-
-# back to root
-exit
+chsh -s $(which zsh)"
 
 # Add rEFInd theme
 mkdir /boot/EFI/refind/themes  && \
@@ -436,6 +418,21 @@ menuentry "Arch Linux - Low Latency" {
 
 include themes/refind-dreary/theme.conf
 EOF
+
+# Zsh hooks
+cat << EOF > /etc/pacman.d/hooks/zsh.hook
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Operation = Remove
+Type = Path
+Target = usr/bin/*
+[Action]
+Depends = zsh
+When = PostTransaction
+Exec = /usr/bin/install -Dm644 /dev/null /var/cache/zsh/pacman
+EOF
+
 
 # Make scripts to start service, firewall, & setup snapshots
 cat << EOF >> /home/$USER/init.sh
