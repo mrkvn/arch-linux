@@ -42,20 +42,22 @@ then
 fi
 
 # Partition
-sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | gdisk $drive
+sed -e 's/\s*\([\+0-9a-zA-Z]*\).*/\1/' << EOF | fdisk $drive
+g # new gpt disk 
 n # new partition
-1 # partition number 1
-  # default - start at beginning of disk
+  # default partition 1
+  # default - first sector
 +512M # 512 MB boot parttion
-ef00 # Partition Type - Hex Code or GUID
+Yes # confirm to remove signature
+t # Filesystem type
+1 # EFI System Type
 n # new partition
-2 # partion number 2
-  # default, start immediately after preceding partition
-  # default, extend partition to end of disk
-  # default, 8300. Partition Type - Hex Code or GUID
-p # print the in-memory partition table
-w # write the partition table
-Y # confirm
+  # default partition 2
+  # default - first sector
+  # default - last sector
+Yes # confirm to remove signature
+p # print partition table
+w # write and quit
 EOF
 
 
@@ -74,24 +76,22 @@ mkfs.btrfs /dev/mapper/crypt
 mount /dev/mapper/crypt /mnt
 btrfs sub create /mnt/@ && \
 btrfs sub create /mnt/@home && \
-btrfs sub create /mnt/@abs && \
-btrfs sub create /mnt/@tmp && \
+btrfs sub create /mnt/@var_abs && \
+btrfs sub create /mnt/@var_tmp && \
 btrfs sub create /mnt/@srv && \
 btrfs sub create /mnt/@snapshots && \
-btrfs sub create /mnt/@btrfs && \
-btrfs sub create /mnt/@log && \
-btrfs sub create /mnt/@cache
+btrfs sub create /mnt/@var_log && \
+btrfs sub create /mnt/@var_cache
 umount /mnt
 mount -o noatime,compress-force=zstd,commit=120,space_cache=v2,ssd,discard=async,autodefrag,subvol=@ /dev/mapper/crypt /mnt
 mkdir -p /mnt/{boot,home,var/cache,var/log,.snapshots,.swapvol,btrfs,var/tmp,var/abs,srv}
 mount -o noatime,compress-force=zstd,commit=120,space_cache=v2,ssd,discard=async,autodefrag,subvol=@home /dev/mapper/crypt /mnt/home  && \
-mount -o noatime,compress-force=zstd,commit=120,space_cache=v2,ssd,discard=async,autodefrag,subvol=@abs /dev/mapper/crypt /mnt/var/abs && \
-mount -o noatime,compress-force=zstd,commit=120,space_cache=v2,ssd,discard=async,autodefrag,subvol=@tmp /dev/mapper/crypt /mnt/var/tmp && \
+mount -o noatime,compress-force=zstd,commit=120,space_cache=v2,ssd,discard=async,autodefrag,subvol=@var_abs /dev/mapper/crypt /mnt/var/abs && \
+mount -o noatime,compress-force=zstd,commit=120,space_cache=v2,ssd,discard=async,autodefrag,subvol=@var_tmp /dev/mapper/crypt /mnt/var/tmp && \
 mount -o noatime,compress-force=zstd,commit=120,space_cache=v2,ssd,discard=async,autodefrag,subvol=@srv /dev/mapper/crypt /mnt/srv && \
-mount -o noatime,compress-force=zstd,commit=120,space_cache=v2,ssd,discard=async,autodefrag,subvol=@log /dev/mapper/crypt /mnt/var/cache && \
-mount -o noatime,compress-force=zstd,commit=120,space_cache=v2,ssd,discard=async,autodefrag,subvol=@cache /dev/mapper/crypt /mnt/var/log && \
+mount -o noatime,compress-force=zstd,commit=120,space_cache=v2,ssd,discard=async,autodefrag,subvol=@var_log /dev/mapper/crypt /mnt/var/log && \
+mount -o noatime,compress-force=zstd,commit=120,space_cache=v2,ssd,discard=async,autodefrag,subvol=@var_cache /dev/mapper/crypt /mnt/var/cache && \
 mount -o noatime,compress-force=zstd,commit=120,space_cache=v2,ssd,discard=async,autodefrag,subvol=@snapshots /dev/mapper/crypt /mnt/.snapshots && \
-mount -o noatime,compress-force=zstd,commit=120,space_cache=v2,ssd,discard=async,autodefrag,subvolid=5 /dev/mapper/crypt /mnt/btrfs
 
 # Disable copy-on-write (CoW) on database/VMs
 mkdir -p /mnt/var/lib/{mysql,postgres,machines,} && \
@@ -118,15 +118,14 @@ cp -rfv post-chroot.sh /mnt/root
 chmod a+x /mnt/root/post-chroot.sh
 
 # chroot
-echo "After chrooting into newly installed OS, please run the post-chroot.sh by executing ./post-chroot.sh"
-echo "Press any key to chroot..."
+echo "========================================================================================================="
+echo "After pressing ENTER, run ./root/post-chroot.sh. Press ENTER to proceed..."
 read tmpvar
 arch-chroot /mnt /bin/bash
 
 # Finish
 echo "If post-chroot.sh is successful, you will now have a fully working bootable Arch Linux system installed."
-echo "The only thing left is to reboot into the new system."
-echo "IMPORTANT: After reboot, run the init.sh script located in your home directory and reboot again."
-echo "Press any key to reboot or Ctrl+C to cancel..."
+echo "Installation Done."
+echo "IMPORTANT: After reboot, run the init.sh script located in your home directory and reboot again. Press ENTER to reboot or Ctrl+C to cancel..."
 read tmpvar
 reboot
