@@ -22,8 +22,9 @@ echo "Root Password ---"
 passwd
 
 # locale
-echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && \
+echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
 locale-gen
+echo "LANG=en_US.UTF-8" > /etc/locale.conf
 
 # timezone
 ln -sf /usr/share/zoneinfo/$TZ /etc/localtime  && \
@@ -60,9 +61,7 @@ echo 'PRUNENAMES = ".snapshots"' >> /etc/updatedb.conf
 sed -i 's/BINARIES=()/BINARIES=("\/usr\/bin\/btrfs")/' /etc/mkinitcpio.conf && \
 sed -i 's/#COMPRESSION="lz4"/COMPRESSION="lz4"/' /etc/mkinitcpio.conf && \
 sed -i 's/#COMPRESSION_OPTIONS=()/COMPRESSION_OPTIONS=(-9)/' /etc/mkinitcpio.conf && \
-#sed -i 's/^HOOKS.*/HOOKS=(base systemd autodetect modconf block sd-encrypt filesystems keyboard fsck)/' /etc/mkinitcpio.conf
-# if you have more than 1 btrfs drive
-sed -i 's/^HOOKS.*/HOOKS=(base systemd autodetect modconf block sd-encrypt resume btrfs filesystems keyboard fsck)/' /etc/mkinitcpio.conf
+sed -i 's/^HOOKS.*/HOOKS=(base systemd autodetect modconf block sd-encrypt filesystems keyboard fsck)/' /etc/mkinitcpio.conf
 
 mkinitcpio -p linux &&
 
@@ -361,12 +360,14 @@ sudo sbsign --key /etc/refind.d/keys/refind_local.key --cert /etc/refind.d/keys/
 rustup default stable && \
 yay --noremovemake --nodiffmenu -S otf-san-francisco pamac-aur optimus-manager optimus-manager-qt joplin-dektop masterpassword-gui pulseaudio-equalizer-ladspa \
 xdman universal-ctags-git starship-bin nohang-git auto-cpufreq-git prelockd popsicle bottom-bin memavaild snapper-gui brave-bin ttf-ms-fonts
-yay --noremovemake --nodiffmenu --editmenu -S linux-xanmod-cacule && \
+
+# not building currently
+#yay --noremovemake --nodiffmenu --editmenu -S linux-xanmod-cacule && \
 
 # dotfile - SKIP this part (personal)
-git clone https://github.com/mrkvn/.dotfiles.git $HOME/.dotfiles && \
-chmod +x $HOME/.dotfiles/.local/bin/mk-stow && \
-./$HOME/.dotfiles/.local/bin/mk-stow && \
+git clone https://github.com/mrkvn/.dotfiles.git /home/$USER/.dotfiles && \
+chmod +x /home/$USER/.dotfiles/.local/bin/mk-stow && \
+./home/$USER/.dotfiles/.local/bin/mk-stow && \
 
 # change shell to zsh
 chsh -s $(which zsh)"
@@ -396,20 +397,6 @@ menuentry "Arch Linux" {
     options  "rd.luks.name=$(blkid $drive"2" | cut -d " " -f2 | cut -d '=' -f2 | sed 's/\"//g')=crypt root=/dev/mapper/crypt rootflags=subvol=@ resume=/dev/mapper/crypt rw quiet nmi_watchdog=0 kernel.unprivileged_userns_clone=0 net.core.bpf_jit_harden=2 apparmor=1 lsm=lockdown,yama,apparmor systemd.unified_cgroup_hierarchy=1 add_efi_memmap initrd=\intel-ucode.img"
     submenuentry "Boot - fallback" {
         initrd /initramfs-linux-fallback.img
-    }
-    submenuentry "Boot - terminal" {
-        add_options "systemd.unit=multi-user.target"
-    }
-}
-
-menuentry "Arch Linux - Low Latency" {
-    icon     /EFI/refind/themes/refind-dreary/icons/os_arch.png
-    volume   "Arch Linux"
-    loader   /vmlinuz-linux-xanmod-cacule
-    initrd   /initramfs-linux-xanmod-cacule.img
-    options  "rd.luks.name=$(blkid $drive"2" | cut -d " " -f2 | cut -d '=' -f2 | sed 's/\"//g')=crypt root=/dev/mapper/crypt rootflags=subvol=@ resume=/dev/mapper/crypt rw quiet nmi_watchdog=0 kernel.unprivileged_userns_clone=0 net.core.bpf_jit_harden=2 apparmor=1 lsm=lockdown,yama,apparmor systemd.unified_cgroup_hierarchy=1 add_efi_memmap initrd=\intel-ucode.img"
-    submenuentry "Boot - fallback" {
-        initrd /initramfs-linux-xanmod-cacule-fallback.img
     }
     submenuentry "Boot - terminal" {
         add_options "systemd.unit=multi-user.target"
