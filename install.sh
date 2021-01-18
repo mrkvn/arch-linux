@@ -118,9 +118,3 @@ echo "After pressing ENTER, run ./root/post-chroot.sh. Press ENTER to proceed...
 read tmpvar
 arch-chroot /mnt /bin/bash
 
-# Finish
-echo "If post-chroot.sh is successful, you will now have a fully working bootable Arch Linux system installed."
-echo "Installation Done."
-echo "IMPORTANT: After reboot, run the init.sh script located in your home directory and reboot again. Press ENTER to reboot or Ctrl+C to cancel..."
-read tmpvar
-reboot
