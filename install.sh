@@ -101,14 +101,9 @@ chattr +C /mnt/var/lib/{mysql,postgres,machines}
 mount $drive"1" /mnt/boot
 
 # base install
-pacstrap /mnt base base-devel linux linux-firmware intel-ucode grub efibootmgr os-prober ntfs-3g networkmanager network-manager-applet wireless_tools \
-    dialog mtools dosfstools linux-headers bluez bluez-utils cups alsa-utils pulseaudio pulseaudio-bluetooth git reflector \
-    xdg-utils xdg-user-dirs xorg nvidia nvidia-utils xfce4 xfce4-goodies tlp iwd sbsigntools fd zsh sshguard firewalld nautilus libsecret gnome-keyring go btrfs-progs \
-    ripgrep bat docker docker-compose libvirt qemu openssh refind rustup rust-analyzer powertop unrar lrzip unzip zip p7zip lzip lzop ncompress ttf-roboto ttf-roboto-mono \
-    ttf-dejavu ttf-liberation ttf-fira-code ttf-hanazono ttf-fira-mono ttf-opensans ttf-hack noto-fonts noto-fonts-emoji ttf-font-awesome ttf-droid \
-    adobe-source-code-pro-fonts adobe-source-han-sans-otc-fonts adobe-source-han-serif-otc-fonts man yarn nodejs systemd-swap wget zsh-completions \
-    gvim htop xclip python2-pip python-pip gnome-calculator sxhkd maim psensor stow tmux git-lfs unclutter xcape pigz pbzip2 zstd neovim flatpak dbus-broker haveged \
-    irqbalance snapper apparmor
+pacstrap /mnt base base-devel linux linux-firmware intel-ucode efibootmgr networkmanager network-manager-applet dialog mtools dosfstools linux-headers \
+bluez bluez-utils cups alsa-utils pulseaudio pulseaudio-bluetooth git reflector iwd sbsigntools fd zsh nautilus libsecret gnome-keyring go btrfs-progs \
+openssh refind unrar lrzip unzip zip p7zip lzip lzop ncompress man systemd-swap wget pigz pbzip2 zstd snapper
 
 # fstab
 genfstab -U /mnt > /mnt/etc/fstab
